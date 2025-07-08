@@ -1,312 +1,897 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ThinkOS</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-      background: #f0f0f0;
-      height: 100%;
-      overflow: hidden;
-    }
-    #top-bar, #bottom-bar {
-      position: fixed;
-      width: 100%;
-      backdrop-filter: blur(5px);
-      background: rgba(128,128,128,0.6);
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      z-index: 999;
-    }
-    #top-bar { top: 0; height: 40px; justify-content: space-between; }
-    #bottom-bar { bottom: 0; height: 50px; justify-content: space-between; }
-    #top-left, #top-right { display: flex; align-items: center; gap: 10px; }
-    #top-center { position: absolute; left: 50%; transform: translateX(-50%); }
-    #app-launcher { display: flex; gap: 15px; justify-content: center; align-items: center; flex: 1; }
-    #status-info { display: flex; align-items: center; gap: 15px; }
-    .menu-icon { cursor: pointer; }
-    #menu-dropdown, #logo-dropdown { display: none; position: absolute; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; z-index: 1000; }
-    #menu-dropdown { top: 40px; right: 10px; }
-    #logo-dropdown { top: 35px; right: 0; width: 150px; }
-    #logo-circle { width: 28px; height: 28px; border-radius: 50%; background: white; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
-    .folder-icon { position: absolute; bottom: 55px; left: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-    .folder-icon img { width: 40px; height: 40px; }
-    .folder-icon label { font-size: 12px; }
-    .window-header { display: flex; justify-content: space-between; align-items: center; cursor: move; background: #ddd; padding: 5px; }
-    .window-controls span { margin-left: 5px; cursor: pointer; }
-    .app-window {
-      position: absolute;
-      display: none;
-      width: 400px;
-      height: 350px;
-      background: #fff;
-      top: 100px;
-      left: 100px;
-      resize: both;
-      overflow: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      z-index: 999;
-    }
-    .app-content { padding: 10px; }
-    #nn-output {
-      margin-top: 10px;
-      background: #eef;
-      padding: 8px;
-      border-radius: 5px;
-      min-height: 40px;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ThinkOS Improved</title>
+<style>
+  :root {
+    --neon-blue: #00caff;
+    --neon-green: #00ff00;
+    --bg-color: #000012;
+  }
+
+
+
+
+
+.neon-btn {
+  position: absolute;
+  padding: 10px 24px;
+  font-weight: bold;
+  color: var(--neon-blue);
+  background: transparent;
+  border: 2px solid var(--neon-blue);
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  transition: all 0.4s ease;
+  transform-style: preserve-3d;
+  box-shadow:
+    0 0 5px var(--neon-blue),
+    0 0 10px var(--neon-blue),
+    0 0 20px var(--neon-blue);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.neon-btn:hover {
+  transform: scale(0.92) rotateY(180deg);
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+  box-shadow:
+    0 0 10px var(--neon-green),
+    0 0 20px var(--neon-green),
+    0 0 30px var(--neon-green);
+}
+
+.neon-btn:active {
+  color: var(--neon-pink);
+  border-color: var(--neon-pink);
+  box-shadow:
+    0 0 5px var(--neon-pink),
+    0 0 15px var(--neon-pink);
+}
+
+
+
+
+
+
+
+  body, html {
+    margin:0; padding:0; height:100%;
+    background: var(--bg-color);
+    color: var(--neon-green);
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+  #loadingScreen {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: black;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 1000;
+  }
+  canvas#matrixCanvas {
+    position: fixed;
+    top:0; left:0;
+    width: 100%; height: 100%;
+    background: black;
+  }
+  #infinitySymbol {
+    font-size: 100px;
+    font-weight: bold;
+    color: transparent;
+    background: linear-gradient(90deg, #00ff00, #00caff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px #00caff);
+    animation: colorShift 4s linear infinite;
+    margin-top: 30px;
+  }
+  @keyframes colorShift {
+    0%{background-position:0 0;}
+    100%{background-position:200% 0;}
+  }
+
+  #loginScreen {
+    display:none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.9);
+    color: var(--neon-green);
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content:center;
+    z-index: 1100;
+  }
+  #loginScreen input {
+    font-size: 20px;
+    padding: 8px;
+    border: 2px solid var(--neon-blue);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--neon-green);
+    outline:none;
+    width: 250px;
+    margin-top: 10px;
+  }
+  #loginMessage {
+    margin-top: 15px;
+    color: #ff5555;
+    font-weight: bold;
+  }
+
+  #desktop {
+    position: fixed;
+    top: 40px;
+    left: 0; right: 0; bottom: 40px;
+    background: #001122ee;
+    overflow: hidden;
+  }
+
+  /* Neon buttons */
+  .neon-btn {
+    position: absolute;
+    width: 140px;
+    height: 40px;
+    border: 2px solid var(--neon-blue);
+    border-radius: 8px;
+    background: #002222dd;
+    color: var(--neon-blue);
+    font-weight: bold;
+    text-align: center;
+    line-height: 40px;
+    cursor: pointer;
+    user-select: none;
+    text-shadow: 0 0 6px var(--neon-blue);
+    box-shadow: 0 0 8px var(--neon-blue);
+    transition: background 0.3s ease;
+    z-index: 900;
+  }
+  .neon-btn:hover {
+    background: var(--neon-blue);
+    color: black;
+  }
+
+  /* Windows */
+  .window {
+    position: absolute;
+    background: #000011dd;
+    border: 2px solid var(--neon-blue);
+    box-shadow: 0 0 20px var(--neon-blue);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    color: var(--neon-green);
+    user-select: text;
+    z-index: 1000;
+  }
+  .window-header {
+    background: #002233;
+    padding: 6px 12px;
+    font-weight: bold;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .window-close {
+    cursor: pointer;
+    color: var(--neon-blue);
+    font-weight: bold;
+    padding: 0 6px;
+    font-size: 18px;
+  }
+  .window-content {
+    padding: 8px;
+    flex-grow: 1;
+    overflow: auto;
+    background: #001122;
+    position: relative;
+  }
+
+  /* Terminal content style */
+  .terminal-output {
+    white-space: pre-wrap;
+    font-family: monospace;
+    height: 100%;
+    overflow-y: auto;
+    color: var(--neon-green);
+  }
+
+  /* Textarea for Notepad */
+  .notepad-textarea {
+    width: 100%;
+    height: 100%;
+    background: #001122;
+    border: none;
+    outline: none;
+    color: var(--neon-green);
+    font-family: monospace;
+    font-size: 14px;
+    resize: none;
+  }
+
+  /* Game styles */
+  #gameCanvas {
+    background: #000011;
+    display: block;
+    margin: auto;
+    border: 2px solid var(--neon-blue);
+    border-radius: 6px;
+  }
+  #scoreDisplay {
+    text-align: center;
+    font-size: 18px;
+    margin: 4px 0;
+    color: var(--neon-green);
+    font-weight: bold;
+  }
+  #gameInstructions {
+    font-size: 12px;
+    color: var(--neon-green);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+</style>
 </head>
 <body>
-  <div id="top-bar">
-    <div id="top-left">
-      <strong id="thinkos-title" style="cursor:pointer">ThinkOS</strong>
-      <div id="about-btn"><abbr title='V: 0.000.1 / ⏰: 17:50 P.M. - Tue, 8 jul'>ℹ️ </abbr></div>
-      <div id="computer-folder"><abbr title="Developer: Amirhossein Shahrestani - 18 years Old."> 💻 </abbr></div>
-    </div>
-    <div id="top-center">
-      <button id="factory-reset">♻️ Factory Reset</button>
-    </div>
-    <div id="top-right">
-      <div id="logo-circle">🌐</div>
-      <div id="menu-icon" class="menu-icon">☰</div>
-    </div>
-  </div>
 
-  <div id="menu-dropdown">
-    <p>📶 Wi-Fi: Connected</p>
-    <p>🔵 Bluetooth: Searching...</p>
-  </div>
+<!-- Loading Screen with Matrix effect and infinity symbol -->
+<div id="loadingScreen">
+  <canvas id="matrixCanvas"></canvas>
+  <div id="infinitySymbol">∞</div>
+</div>
 
-  <div id="logo-dropdown">
-    <a href="https://t.me/ThinkOS2" target="_blank">Telegram 📱</a><br />
-    <a href="https://github.com/ThinkOS2" target="_blank">GitHub 💻</a>
-  </div>
+<!-- Login screen for password -->
+<div id="loginScreen">
+  <div>Please enter password to login:</div>
+  <input type="password" id="loginInput" autocomplete="off" />
+  <div id="loginMessage"></div>
+</div>
 
-  <div id="bottom-bar">
-    <div></div>
-    <div id="app-launcher">
-      <button onclick="openApp('browser-window')">🌐 Browser</button>
-      <button onclick="openApp('notepad-window')">📝 Notepad</button>
-      <button onclick="openApp('calendar-window')">📅 Calendar</button>
-    </div>
-    <div id="status-info">
-      <div id="battery">🔋 82%</div>
-      <div id="clock">🕒 14:52</div>
-    </div>
-  </div>
+<!-- Desktop container -->
+<div id="desktop"></div>
 
-  <div class="folder-icon" onclick="openApp('share-window')">
-    <img src="https://img.icons8.com/ios-filled/50/mac-folder.png" alt="Share Files Folder" />
-    <label>Share Files</label>
-  </div>
+<script>
+(() => {
+  const desktop = document.getElementById('desktop');
+  const loadingScreen = document.getElementById('loadingScreen');
+  const loginScreen = document.getElementById('loginScreen');
+  const loginInput = document.getElementById('loginInput');
+  const loginMessage = document.getElementById('loginMessage');
 
-  <div id="browser-window" class="app-window">
-    <div class="window-header">
-      <span>🌐 Browser</span>
-      <div class="window-controls">
-        <span onclick="minimizeApp('browser-window')">🟠</span>
-        <span onclick="closeApp('browser-window')">🔴</span>
-      </div>
-    </div>
-    <div class="app-content">
-      <input type="text" placeholder="Search Google..." onkeydown="if(event.key==='Enter'){window.open('https://www.google.com/search?q='+this.value,'_blank')}">
-    </div>
-  </div>
+  let userPassword = null; // no password by default
+  let loggedIn = false;
+  let topZ = 1000; // z-index tracker for windows
 
-  <div id="notepad-window" class="app-window">
-    <div class="window-header">
-      <span>📝 Notepad</span>
-      <div class="window-controls">
-        <span onclick="minimizeApp('notepad-window')">🟠</span>
-        <span onclick="closeApp('notepad-window')">🔴</span>
-      </div>
-    </div>
-    <div class="app-content">
-      <textarea style="width:100%;height:200px;"></textarea>
-    </div>
-  </div>
+  // Matrix canvas setup
+  const canvas = document.getElementById('matrixCanvas');
+  const ctx = canvas.getContext('2d');
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
 
-  <div id="share-window" class="app-window">
-    <div class="window-header">
-      <span>📁 Share Files</span>
-      <div class="window-controls">
-        <span onclick="minimizeApp('share-window')">🟠</span>
-        <span onclick="closeApp('share-window')">🔴</span>
-      </div>
-    </div>
-    <div class="app-content">
-      <ul>
-        <li>song.mp3</li>
-        <li>video.mp4</li>
-        <li>image.png</li>
-      </ul>
-    </div>
-  </div>
+  const letters = 'アァカサタナハマヤラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const fontSize = 18;
+  const columns = Math.floor(width / fontSize);
+  const drops = new Array(columns).fill(1);
 
-  <div id="about-window" class="app-window">
-    <div class="window-header">
-      <span>ThinkOS</span>
-      <div class="window-controls">
-        <span onclick="minimizeApp('about-window')">🟠</span>
-        <span onclick="closeApp('about-window')">🔴</span>
-      </div>
-    </div>
-    <div class="app-content">
-      <p>Version: 1.0</p>
-      <p>Created for those who want to behave differently.</p>
-      
-      <p><button onclick="alert('Full logout done.')">🚪 Full Logout</button></p>
-      <p><button onclick="alert('Data saved.')">💾 Save Data</button></p>
-    </div>
-  </div>
+  function drawMatrix() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, width, height);
 
-  <div id="computer-window" class="app-window">
-    <div class="window-header">
-      <span>💻 Computer</span>
-      <div class="window-controls">
-        <span onclick="minimizeApp('computer-window')">🟠</span>
-        <span onclick="closeApp('computer-window')">🔴</span>
-      </div>
-    </div>
-    <div class="app-content">
-      <p>📤 Upload files from host system</p>
-      <input type="file" multiple>
-      
-      <button id="auto-translate-btn" style="margin-top: 10px;">🌐 Auto Translate</button>
+    ctx.fillStyle = '#0f0';
+    ctx.font = fontSize + 'px monospace';
 
-      <div id="translation-output" style="margin-top: 10px; font-size: 14px;"></div>
+    for (let i = 0; i < drops.length; i++) {
+      const text = letters.charAt(Math.floor(Math.random() * letters.length));
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
-      <hr />
+      if (drops[i] * fontSize > height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
 
-      <h3>🤖 Neural Net Simulator</h3>
-      <textarea id="nn-input" placeholder="Enter numbers separated by commas, e.g. 0.5, 0.2, 0.1" style="width: 100%; height: 60px;"></textarea>
-      <button id="run-nn-btn" style="margin-top: 5px;">▶️ Run Neural Net</button>
-      <div id="nn-output">Output will appear here.</div>
+  let matrixInterval;
 
-      <p style="margin-top: 20px;">📊 User behavior is being tracked... (Auto delete every 2 hours)</p>
-    </div>
-  </div>
+  function startMatrix() {
+    matrixInterval = setInterval(drawMatrix, 50);
+  }
 
-  <script>
-    function toggleDropdown(id) {
-      const el = document.getElementById(id);
-      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  function stopMatrix() {
+    clearInterval(matrixInterval);
+    ctx.clearRect(0, 0, width, height);
+  }
+
+  // Play boot sound (simple beep sequence)
+  function playBootSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+      const duration = 0.1;
+      const frequencies = [600, 800, 1000];
+
+      frequencies.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.frequency.value = freq;
+        osc.type = 'square';
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + i * duration * 1.2);
+        osc.stop(audioCtx.currentTime + i * duration * 1.2 + duration);
+      });
+    } catch(e) {
+      // Audio not supported
+    }
+  }
+
+  // Save/load password from localStorage
+  function savePassword(pw) {
+    localStorage.setItem('thinkosPassword', pw);
+    userPassword = pw;
+  }
+  function loadPassword() {
+    return localStorage.getItem('thinkosPassword') || null;
+  }
+
+  // Show desktop and create start buttons
+  function showDesktop() {
+    loadingScreen.style.display = 'none';
+    loginScreen.style.display = 'none';
+    desktop.style.display = 'block';
+    createAppButtons();
+  }
+
+  // Create the app launcher buttons on desktop
+  function createAppButtons() {
+    desktop.innerHTML = ''; // clear first
+
+    const apps = [
+      {id:'terminal', label:'Terminal', x:20, y:20, onClick: openTerminal},
+      {id:'notepad', label:'Notepad', x:20, y:70, onClick: openNotepad},
+      {id:'snake', label:'Snake Game', x:20, y:120, onClick: openSnakeGame},
+      {id:'settings', label:'Settings', x:20, y:170, onClick: openSettings}
+    ];
+
+    apps.forEach(app => {
+      const btn = document.createElement('div');
+      btn.className = 'neon-btn';
+      btn.textContent = app.label;
+      btn.style.left = app.x + 'px';
+      btn.style.top = app.y + 'px';
+      btn.addEventListener('click', app.onClick);
+      desktop.appendChild(btn);
+    });
+  }
+
+  // Utility: make element draggable within desktop
+  function makeDraggable(el, header) {
+    let pos = {x:0, y:0, mouseX:0, mouseY:0};
+
+    header.style.cursor = 'move';
+    header.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+      e.preventDefault();
+      pos.mouseX = e.clientX;
+      pos.mouseY = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+      el.style.zIndex = ++topZ;
     }
 
-    function openApp(id) {
-      const el = document.getElementById(id);
-      el.style.display = 'block';
-      el.style.zIndex = 1000;
+    function elementDrag(e) {
+      e.preventDefault();
+      pos.x = pos.mouseX - e.clientX;
+      pos.y = pos.mouseY - e.clientY;
+      pos.mouseX = e.clientX;
+      pos.mouseY = e.clientY;
+      let newTop = (el.offsetTop - pos.y);
+      let newLeft = (el.offsetLeft - pos.x);
+
+      // constrain inside desktop
+      const maxLeft = desktop.clientWidth - el.clientWidth;
+      const maxTop = desktop.clientHeight - el.clientHeight;
+
+      if(newLeft < 0) newLeft = 0;
+      if(newTop < 0) newTop = 0;
+      if(newLeft > maxLeft) newLeft = maxLeft;
+      if(newTop > maxTop) newTop = maxTop;
+
+      el.style.top = newTop + 'px';
+      el.style.left = newLeft + 'px';
     }
 
-    function closeApp(id) {
-      document.getElementById(id).style.display = 'none';
+    function closeDragElement() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
+
+  // Create window with given id, title, content element
+  function createWindow(id, title, contentEl, width=450, height=300, x=100, y=100) {
+    // Check if window already exists
+    let existing = document.getElementById(id);
+    if(existing) {
+      existing.style.zIndex = ++topZ;
+      return existing;
     }
 
-    function minimizeApp(id) {
-      document.getElementById(id).style.display = 'none';
-    }
+    const win = document.createElement('div');
+    win.className = 'window';
+    win.id = id;
+    win.style.width = width + 'px';
+    win.style.height = height + 'px';
+    win.style.left = x + 'px';
+    win.style.top = y + 'px';
+    win.style.zIndex = ++topZ;
 
-    document.querySelector('#menu-icon').addEventListener('click', () => toggleDropdown('menu-dropdown'));
-    document.querySelector('#logo-circle').addEventListener('click', () => toggleDropdown('logo-dropdown'));
-    document.querySelector('#thinkos-title').addEventListener('click', () => {
-      openApp('about-window');
+    const header = document.createElement('div');
+    header.className = 'window-header';
+    header.textContent = title;
+
+    const closeBtn = document.createElement('div');
+    closeBtn.className = 'window-close';
+    closeBtn.textContent = '×';
+    closeBtn.title = 'Close';
+    closeBtn.onclick = () => win.remove();
+
+    header.appendChild(closeBtn);
+    win.appendChild(header);
+
+    const content = document.createElement('div');
+    content.className = 'window-content';
+    content.appendChild(contentEl);
+
+    win.appendChild(content);
+
+    desktop.appendChild(win);
+
+    makeDraggable(win, header);
+
+    return win;
+  }
+
+  // ---------------- Terminal ------------------
+  function openTerminal() {
+    // Terminal content elements
+    const termOutput = document.createElement('div');
+    termOutput.className = 'terminal-output';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.style.width = '100%';
+    input.style.background = '#001122';
+    input.style.border = 'none';
+    input.style.color = 'var(--neon-green)';
+    input.style.outline = 'none';
+    input.style.fontFamily = 'monospace';
+    input.style.fontSize = '14px';
+
+    let history = [];
+    let histIndex = 0;
+
+    // Append input to content container
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.height = '100%';
+    container.appendChild(termOutput);
+    container.appendChild(input);
+
+    // Print welcome message
+    appendLine('ThinkOS Terminal v1.0');
+    appendLine('Type "help" for commands.');
+
+    input.focus();
+
+    input.addEventListener('keydown', e => {
+      if(e.key === 'Enter') {
+        const cmd = input.value.trim();
+        appendLine('> ' + cmd);
+        input.value = '';
+        handleCommand(cmd.toLowerCase());
+        history.push(cmd);
+        histIndex = history.length;
+      } else if(e.key === 'ArrowUp') {
+        if(histIndex > 0) histIndex--;
+        input.value = history[histIndex] || '';
+      } else if(e.key === 'ArrowDown') {
+        if(histIndex < history.length - 1) histIndex++;
+        input.value = history[histIndex] || '';
+      }
     });
 
-    function updateClock() {
-      const now = new Date();
-      const tehran = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Tehran' });
-      const paris = now.toLocaleTimeString('en-FR', { timeZone: 'Europe/Paris' });
-      const beijing = now.toLocaleTimeString('en-CN', { timeZone: 'Asia/Shanghai' });
-      document.querySelector('#clock').title = `Tehran: ${tehran}\nParis: ${paris}\nBeijing: ${beijing}`;
-      document.querySelector('#clock').textContent = '🕒 ' + now.toLocaleTimeString('en-US');
+    function appendLine(text) {
+      termOutput.textContent += text + '\n';
+      termOutput.scrollTop = termOutput.scrollHeight;
     }
-    setInterval(updateClock, 1000);
-    updateClock();
 
-    document.querySelector('#factory-reset').addEventListener('click', () => {
-      if (confirm("Are you sure you want to factory reset? This action is irreversible.")) {
-        if (confirm("This is the last warning. All data will be deleted. Continue?")) {
-          setTimeout(() => {
-            location.reload();
-          }, 35000);
+    function handleCommand(cmd) {
+      switch(cmd) {
+        case 'help':
+          appendLine('Commands: help, clear, echo [text], about');
+          break;
+        case 'clear':
+          termOutput.textContent = '';
+          break;
+        case 'about':
+          appendLine('ThinkOS Terminal by ChatGPT 2025');
+          break;
+        default:
+          if(cmd.startsWith('echo ')) {
+            appendLine(cmd.substring(5));
+          } else if(cmd.length === 0) {
+            // do nothing
+          } else {
+            appendLine('Unknown command: ' + cmd);
+          }
+      }
+    }
+
+    createWindow('terminalWindow', 'Terminal', container, 500, 350, 150, 100);
+  }
+
+  // ---------------- Notepad -------------------
+  function openNotepad() {
+    const textarea = document.createElement('textarea');
+    textarea.className = 'notepad-textarea';
+    textarea.spellcheck = false;
+
+    // Load saved content
+    textarea.value = localStorage.getItem('thinkosNotepad') || '';
+
+    // Save on change
+    textarea.addEventListener('input', () => {
+      localStorage.setItem('thinkosNotepad', textarea.value);
+    });
+
+    createWindow('notepadWindow', 'Notepad', textarea, 500, 350, 220, 120);
+  }
+
+  // ---------------- Snake Game -----------------
+  function openSnakeGame() {
+    // Create game container
+    const gameContainer = document.createElement('div');
+    gameContainer.style.height = '100%';
+    gameContainer.style.display = 'flex';
+    gameContainer.style.flexDirection = 'column';
+
+    // Score display
+    const scoreDisplay = document.createElement('div');
+    scoreDisplay.id = 'scoreDisplay';
+    scoreDisplay.textContent = 'Score: 0';
+
+    // Instructions
+    const instructions = document.createElement('div');
+    instructions.id = 'gameInstructions';
+    instructions.textContent = 'Use arrow keys to move the snake.';
+
+    // Canvas
+    const canvas = document.createElement('canvas');
+    canvas.id = 'gameCanvas';
+    canvas.width = 400;
+    canvas.height = 400;
+
+    gameContainer.appendChild(scoreDisplay);
+    gameContainer.appendChild(instructions);
+    gameContainer.appendChild(canvas);
+
+    // Snake game logic
+    const ctx = canvas.getContext('2d');
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake = [{x:10, y:10}];
+    let velocity = {x:0, y:0};
+    let food = {};
+    let score = 0;
+    let gameOver = false;
+
+    function placeFood() {
+      food.x = Math.floor(Math.random() * tileCount);
+      food.y = Math.floor(Math.random() * tileCount);
+      // Make sure food doesn't spawn inside snake
+      if(snake.some(s => s.x === food.x && s.y === food.y)) {
+        placeFood();
+      }
+    }
+
+    function gameLoop() {
+      if(gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'var(--neon-green)';
+        ctx.font = '40px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', canvas.width/2, canvas.height/2);
+        ctx.font = '20px monospace';
+        ctx.fillText('Press Enter to Restart', canvas.width/2, canvas.height/2 + 40);
+        return;
+      }
+
+      // Move snake
+      const head = {x: snake[0].x + velocity.x, y: snake[0].y + velocity.y};
+
+      // Check collision with walls
+      if(head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+        gameOver = true;
+      }
+
+      // Check collision with self
+      if(snake.some(s => s.x === head.x && s.y === head.y)) {
+        gameOver = true;
+      }
+
+      if(gameOver) {
+        draw();
+        return;
+      }
+
+      snake.unshift(head);
+
+      // Check food eaten
+      if(head.x === food.x && head.y === food.y) {
+        score++;
+        scoreDisplay.textContent = 'Score: ' + score;
+        placeFood();
+      } else {
+        snake.pop();
+      }
+
+      draw();
+    }
+
+    function draw() {
+      // Background
+      ctx.fillStyle = '#000011';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw food
+      ctx.fillStyle = 'red';
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+
+      // Draw snake
+      ctx.fillStyle = 'var(--neon-green)';
+      snake.forEach((s,i) => {
+        ctx.fillRect(s.x * gridSize, s.y * gridSize, gridSize, gridSize);
+        if(i === 0) {
+          ctx.fillStyle = '#00ffaa';
+          ctx.fillRect(s.x * gridSize, s.y * gridSize, gridSize, gridSize);
+          ctx.fillStyle = 'var(--neon-green)';
         }
-      }
-    });
-
-    document.getElementById('auto-translate-btn').addEventListener('click', () => {
-      const translationOutput = document.getElementById('translation-output');
-
-      const originalText = `This is a sample text for translation.
-The goal is to translate the text into Chinese and Belarusian.`;
-
-      const translations = {
-        chinese: `这是一个用于翻译的示例文本。
-目标是将文本翻译成中文和白俄罗斯语。`,
-        belarusian: `Гэта прыклад тэксту для перакладу.
-Мэта — перакласці тэкст на кітайскую і беларускую мовы.`
-      };
-
-      translationOutput.innerHTML = `
-        <div>🇨🇳 Chinese:</div>
-        <p style="white-space: pre-line;">${translations.chinese}</p>
-        <hr />
-        <div>🇧🇾 Belarusian:</div>
-        <p style="white-space: pre-line;">${translations.belarusian}</p>
-      `;
-    });
-
-    // Simple neural network: single neuron with sigmoid activation
-    function sigmoid(x) {
-      return 1 / (1 + Math.exp(-x));
+      });
     }
 
-    // Run the neural net on input vector
-    function runNeuralNet(inputArray) {
-      // For demo, use fixed weights and bias
-      const weights = [0.4, -0.7, 0.2];
-      const bias = 0.1;
-
-      // If input less than 3 elements, pad with 0
-      while(inputArray.length < 3) inputArray.push(0);
-
-      // Calculate weighted sum
-      let sum = 0;
-      for(let i=0; i<3; i++) {
-        sum += inputArray[i] * weights[i];
+    function keyDown(e) {
+      switch(e.key) {
+        case 'ArrowUp':
+          if(velocity.y === 1) break;
+          velocity = {x:0, y:-1};
+          break;
+        case 'ArrowDown':
+          if(velocity.y === -1) break;
+          velocity = {x:0, y:1};
+          break;
+        case 'ArrowLeft':
+          if(velocity.x === 1) break;
+          velocity = {x:-1, y:0};
+          break;
+        case 'ArrowRight':
+          if(velocity.x === -1) break;
+          velocity = {x:1, y:0};
+          break;
+        case 'Enter':
+          if(gameOver) resetGame();
+          break;
       }
-      sum += bias;
-
-      // Apply sigmoid
-      return sigmoid(sum);
     }
 
-    document.getElementById('run-nn-btn').addEventListener('click', () => {
-      const inputText = document.getElementById('nn-input').value.trim();
-      const nnOutput = document.getElementById('nn-output');
-      if (!inputText) {
-        nnOutput.textContent = "⚠️ Please enter input values!";
-        return;
+    function resetGame() {
+      snake = [{x:10, y:10}];
+      velocity = {x:0, y:0};
+      score = 0;
+      scoreDisplay.textContent = 'Score: 0';
+      gameOver = false;
+      placeFood();
+    }
+
+    placeFood();
+    resetGame();
+
+    window.addEventListener('keydown', keyDown);
+
+    const interval = setInterval(gameLoop, 150);
+
+    // Cleanup on window close
+    const win = createWindow('snakeWindow', 'Snake Game', gameContainer, 450, 480, 300, 150);
+    // Override window close to cleanup event and interval
+    const closeBtn = win.querySelector('.window-close');
+    closeBtn.onclick = () => {
+      clearInterval(interval);
+      window.removeEventListener('keydown', keyDown);
+      win.remove();
+    };
+  }
+
+  // ---------------- Settings ------------------
+  function openSettings() {
+    const container = document.createElement('div');
+
+    // Password set label
+    const label = document.createElement('label');
+    label.textContent = 'Set system password (leave empty to disable): ';
+    label.style.display = 'block';
+    label.style.marginBottom = '10px';
+
+    // Input box
+    const input = document.createElement('input');
+    input.type = 'password';
+    input.style.width = '100%';
+    input.style.padding = '6px';
+    input.value = userPassword || '';
+    input.placeholder = 'Enter new password';
+
+    // Save button
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save Password';
+    saveBtn.style.marginTop = '10px';
+    saveBtn.style.padding = '6px 12px';
+    saveBtn.style.background = 'var(--neon-blue)';
+    saveBtn.style.color = 'black';
+    saveBtn.style.border = 'none';
+    saveBtn.style.borderRadius = '4px';
+    saveBtn.style.cursor = 'pointer';
+
+    // Message display
+    const msg = document.createElement('div');
+    msg.style.marginTop = '10px';
+
+    saveBtn.onclick = () => {
+      const val = input.value.trim();
+      if(val.length === 0) {
+        localStorage.removeItem('thinkosPassword');
+        userPassword = null;
+        msg.style.color = 'lime';
+        msg.textContent = 'Password disabled.';
+      } else {
+        localStorage.setItem('thinkosPassword', val);
+        userPassword = val;
+        msg.style.color = 'lime';
+        msg.textContent = 'Password saved.';
       }
-      // Parse numbers separated by comma
-      let inputNumbers = inputText.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-      if (inputNumbers.length === 0) {
-        nnOutput.textContent = "⚠️ Invalid input numbers!";
-        return;
+    };
+
+    container.appendChild(label);
+    container.appendChild(input);
+    container.appendChild(saveBtn);
+    container.appendChild(msg);
+
+    createWindow('settingsWindow', 'Settings', container, 400, 180, 250, 200);
+  }
+
+  // --------------- Login handler --------------
+  function showLoginScreen() {
+    loginScreen.style.display = 'flex';
+    loginInput.value = '';
+    loginInput.focus();
+  }
+
+  loginInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+      const val = loginInput.value;
+      if(val === userPassword) {
+        loggedIn = true;
+        loginScreen.style.display = 'none';
+        showDesktop();
+      } else {
+        loginMessage.textContent = 'Incorrect password!';
+        loginInput.value = '';
       }
-      const output = runNeuralNet(inputNumbers);
-      nnOutput.textContent = `Neural net output: ${output.toFixed(4)}`;
-    });
-  </script>
+    }
+  });
+
+  // --------------- Initialize -----------------
+
+  function init() {
+    userPassword = loadPassword();
+    startMatrix();
+    playBootSound();
+
+    setTimeout(() => {
+      stopMatrix();
+      if(userPassword) {
+        showLoginScreen();
+      } else {
+        loggedIn = true;
+        showDesktop();
+      }
+    }, 4000);
+  }
+
+  // Resize canvas on window resize
+  window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+  });
+
+  init();
+
+})();
+// افزودن دکمه قطب نما به دسکتاپ
+function createAppButtons() {
+  desktop.innerHTML = ''; // clear first
+
+  const apps = [
+  {id: 'notepad', label: 'Notepad', x: 20, y: 20, onClick: openNotepad},
+  {id: 'terminal', label: 'Terminal', x: 20, y: 80, onClick: openTerminal},
+  {id: 'settings', label: 'Settings', x: 20, y: 140, onClick: openSettings},
+  {id: 'compass', label: 'Compass', x: 20, y: 200, onClick: openCompass}
+];
+
+  apps.forEach(app => {
+    const btn = document.createElement('div');
+    btn.className = 'neon-btn';
+    btn.textContent = app.label;
+    btn.style.left = app.x + 'px';
+    btn.style.top = app.y + 'px';
+    btn.addEventListener('click', app.onClick);
+    desktop.appendChild(btn);
+  });
+}function openCompass() {
+  const container = document.createElement('div');
+  container.style.fontFamily = 'monospace';
+  container.style.fontSize = '18px';
+  container.style.color = 'var(--neon-green)';
+  container.style.padding = '10px';
+  container.style.textAlign = 'center';
+
+  // جهت‌ها
+  const directions = [
+    '1. New York',
+    '2. Falkland Islands',
+    '3. Greenwich',
+    '4. Jerusalem',
+    '5. Riyadh',
+    '6. Tehran'
+  ];
+
+  directions.forEach(dir => {
+    const p = document.createElement('p');
+    p.textContent = dir;
+    container.appendChild(p);
+  });
+
+  // آیکن قطب‌نما
+  const compassIcon = document.createElement('div');
+  compassIcon.innerHTML = '🧭';
+  compassIcon.style.fontSize = '64px';
+  compassIcon.style.margin = '10px auto';
+  compassIcon.style.transition = 'transform 0.5s ease-in-out';
+  container.insertBefore(compassIcon, container.firstChild);
+
+  // حرکت تصادفی قطب‌نما
+  setInterval(() => {
+    const angle = Math.floor(Math.random() * 360);
+    compassIcon.style.transform = `rotate(${angle}deg)`;
+  }, 2000);
+
+  createWindow('compassWindow', 'Compass Directions', container, 280, 220, 280, 250);
+}
+
+</script>
+
 </body>
 </html>
