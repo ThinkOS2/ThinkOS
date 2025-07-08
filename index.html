@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ThinkOS</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #f0f0f0;
+      height: 100%;
+      overflow: hidden;
+    }
+    #top-bar, #bottom-bar {
+      position: fixed;
+      width: 100%;
+      backdrop-filter: blur(5px);
+      background: rgba(128,128,128,0.6);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      z-index: 999;
+    }
+    #top-bar { top: 0; height: 40px; justify-content: space-between; }
+    #bottom-bar { bottom: 0; height: 50px; justify-content: space-between; }
+    #top-left, #top-right { display: flex; align-items: center; gap: 10px; }
+    #top-center { position: absolute; left: 50%; transform: translateX(-50%); }
+    #app-launcher { display: flex; gap: 15px; justify-content: center; align-items: center; flex: 1; }
+    #status-info { display: flex; align-items: center; gap: 15px; }
+    .menu-icon { cursor: pointer; }
+    #menu-dropdown, #logo-dropdown { display: none; position: absolute; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; z-index: 1000; }
+    #menu-dropdown { top: 40px; right: 10px; }
+    #logo-dropdown { top: 35px; right: 0; width: 150px; }
+    #logo-circle { width: 28px; height: 28px; border-radius: 50%; background: white; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+    .folder-icon { position: absolute; bottom: 55px; left: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+    .folder-icon img { width: 40px; height: 40px; }
+    .folder-icon label { font-size: 12px; }
+    .window-header { display: flex; justify-content: space-between; align-items: center; cursor: move; background: #ddd; padding: 5px; }
+    .window-controls span { margin-left: 5px; cursor: pointer; }
+    .app-window {
+      position: absolute;
+      display: none;
+      width: 400px;
+      height: 350px;
+      background: #fff;
+      top: 100px;
+      left: 100px;
+      resize: both;
+      overflow: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+    .app-content { padding: 10px; }
+    #nn-output {
+      margin-top: 10px;
+      background: #eef;
+      padding: 8px;
+      border-radius: 5px;
+      min-height: 40px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="top-bar">
+    <div id="top-left">
+      <strong id="thinkos-title" style="cursor:pointer">ThinkOS</strong>
+      <div id="about-btn"><abbr title='V: 0.000.1 / ⏰: 17:50 P.M. - Tue, 8 jul'>ℹ️ </abbr></div>
+      <div id="computer-folder"><abbr title="Developer: Amirhossein Shahrestani - 18 years Old."> 💻 </abbr></div>
+    </div>
+    <div id="top-center">
+      <button id="factory-reset">♻️ Factory Reset</button>
+    </div>
+    <div id="top-right">
+      <div id="logo-circle">🌐</div>
+      <div id="menu-icon" class="menu-icon">☰</div>
+    </div>
+  </div>
+
+  <div id="menu-dropdown">
+    <p>📶 Wi-Fi: Connected</p>
+    <p>🔵 Bluetooth: Searching...</p>
+  </div>
+
+  <div id="logo-dropdown">
+    <a href="https://t.me/ThinkOS2" target="_blank">Telegram 📱</a><br />
+    <a href="https://github.com/ThinkOS2" target="_blank">GitHub 💻</a>
+  </div>
+
+  <div id="bottom-bar">
+    <div></div>
+    <div id="app-launcher">
+      <button onclick="openApp('browser-window')">🌐 Browser</button>
+      <button onclick="openApp('notepad-window')">📝 Notepad</button>
+      <button onclick="openApp('calendar-window')">📅 Calendar</button>
+    </div>
+    <div id="status-info">
+      <div id="battery">🔋 82%</div>
+      <div id="clock">🕒 14:52</div>
+    </div>
+  </div>
+
+  <div class="folder-icon" onclick="openApp('share-window')">
+    <img src="https://img.icons8.com/ios-filled/50/mac-folder.png" alt="Share Files Folder" />
+    <label>Share Files</label>
+  </div>
+
+  <div id="browser-window" class="app-window">
+    <div class="window-header">
+      <span>🌐 Browser</span>
+      <div class="window-controls">
+        <span onclick="minimizeApp('browser-window')">🟠</span>
+        <span onclick="closeApp('browser-window')">🔴</span>
+      </div>
+    </div>
+    <div class="app-content">
+      <input type="text" placeholder="Search Google..." onkeydown="if(event.key==='Enter'){window.open('https://www.google.com/search?q='+this.value,'_blank')}">
+    </div>
+  </div>
+
+  <div id="notepad-window" class="app-window">
+    <div class="window-header">
+      <span>📝 Notepad</span>
+      <div class="window-controls">
+        <span onclick="minimizeApp('notepad-window')">🟠</span>
+        <span onclick="closeApp('notepad-window')">🔴</span>
+      </div>
+    </div>
+    <div class="app-content">
+      <textarea style="width:100%;height:200px;"></textarea>
+    </div>
+  </div>
+
+  <div id="share-window" class="app-window">
+    <div class="window-header">
+      <span>📁 Share Files</span>
+      <div class="window-controls">
+        <span onclick="minimizeApp('share-window')">🟠</span>
+        <span onclick="closeApp('share-window')">🔴</span>
+      </div>
+    </div>
+    <div class="app-content">
+      <ul>
+        <li>song.mp3</li>
+        <li>video.mp4</li>
+        <li>image.png</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="about-window" class="app-window">
+    <div class="window-header">
+      <span>ThinkOS</span>
+      <div class="window-controls">
+        <span onclick="minimizeApp('about-window')">🟠</span>
+        <span onclick="closeApp('about-window')">🔴</span>
+      </div>
+    </div>
+    <div class="app-content">
+      <p>Version: 1.0</p>
+      <p>Created for those who want to behave differently.</p>
+      
+      <p><button onclick="alert('Full logout done.')">🚪 Full Logout</button></p>
+      <p><button onclick="alert('Data saved.')">💾 Save Data</button></p>
+    </div>
+  </div>
+
+  <div id="computer-window" class="app-window">
+    <div class="window-header">
+      <span>💻 Computer</span>
+      <div class="window-controls">
+        <span onclick="minimizeApp('computer-window')">🟠</span>
+        <span onclick="closeApp('computer-window')">🔴</span>
+      </div>
+    </div>
+    <div class="app-content">
+      <p>📤 Upload files from host system</p>
+      <input type="file" multiple>
+      
+      <button id="auto-translate-btn" style="margin-top: 10px;">🌐 Auto Translate</button>
+
+      <div id="translation-output" style="margin-top: 10px; font-size: 14px;"></div>
+
+      <hr />
+
+      <h3>🤖 Neural Net Simulator</h3>
+      <textarea id="nn-input" placeholder="Enter numbers separated by commas, e.g. 0.5, 0.2, 0.1" style="width: 100%; height: 60px;"></textarea>
+      <button id="run-nn-btn" style="margin-top: 5px;">▶️ Run Neural Net</button>
+      <div id="nn-output">Output will appear here.</div>
+
+      <p style="margin-top: 20px;">📊 User behavior is being tracked... (Auto delete every 2 hours)</p>
+    </div>
+  </div>
+
+  <script>
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openApp(id) {
+      const el = document.getElementById(id);
+      el.style.display = 'block';
+      el.style.zIndex = 1000;
+    }
+
+    function closeApp(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function minimizeApp(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    document.querySelector('#menu-icon').addEventListener('click', () => toggleDropdown('menu-dropdown'));
+    document.querySelector('#logo-circle').addEventListener('click', () => toggleDropdown('logo-dropdown'));
+    document.querySelector('#thinkos-title').addEventListener('click', () => {
+      openApp('about-window');
+    });
+
+    function updateClock() {
+      const now = new Date();
+      const tehran = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Tehran' });
+      const paris = now.toLocaleTimeString('en-FR', { timeZone: 'Europe/Paris' });
+      const beijing = now.toLocaleTimeString('en-CN', { timeZone: 'Asia/Shanghai' });
+      document.querySelector('#clock').title = `Tehran: ${tehran}\nParis: ${paris}\nBeijing: ${beijing}`;
+      document.querySelector('#clock').textContent = '🕒 ' + now.toLocaleTimeString('en-US');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    document.querySelector('#factory-reset').addEventListener('click', () => {
+      if (confirm("Are you sure you want to factory reset? This action is irreversible.")) {
+        if (confirm("This is the last warning. All data will be deleted. Continue?")) {
+          setTimeout(() => {
+            location.reload();
+          }, 35000);
+        }
+      }
+    });
+
+    document.getElementById('auto-translate-btn').addEventListener('click', () => {
+      const translationOutput = document.getElementById('translation-output');
+
+      const originalText = `This is a sample text for translation.
+The goal is to translate the text into Chinese and Belarusian.`;
+
+      const translations = {
+        chinese: `这是一个用于翻译的示例文本。
+目标是将文本翻译成中文和白俄罗斯语。`,
+        belarusian: `Гэта прыклад тэксту для перакладу.
+Мэта — перакласці тэкст на кітайскую і беларускую мовы.`
+      };
+
+      translationOutput.innerHTML = `
+        <div>🇨🇳 Chinese:</div>
+        <p style="white-space: pre-line;">${translations.chinese}</p>
+        <hr />
+        <div>🇧🇾 Belarusian:</div>
+        <p style="white-space: pre-line;">${translations.belarusian}</p>
+      `;
+    });
+
+    // Simple neural network: single neuron with sigmoid activation
+    function sigmoid(x) {
+      return 1 / (1 + Math.exp(-x));
+    }
+
+    // Run the neural net on input vector
+    function runNeuralNet(inputArray) {
+      // For demo, use fixed weights and bias
+      const weights = [0.4, -0.7, 0.2];
+      const bias = 0.1;
+
+      // If input less than 3 elements, pad with 0
+      while(inputArray.length < 3) inputArray.push(0);
+
+      // Calculate weighted sum
+      let sum = 0;
+      for(let i=0; i<3; i++) {
+        sum += inputArray[i] * weights[i];
+      }
+      sum += bias;
+
+      // Apply sigmoid
+      return sigmoid(sum);
+    }
+
+    document.getElementById('run-nn-btn').addEventListener('click', () => {
+      const inputText = document.getElementById('nn-input').value.trim();
+      const nnOutput = document.getElementById('nn-output');
+      if (!inputText) {
+        nnOutput.textContent = "⚠️ Please enter input values!";
+        return;
+      }
+      // Parse numbers separated by comma
+      let inputNumbers = inputText.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+      if (inputNumbers.length === 0) {
+        nnOutput.textContent = "⚠️ Invalid input numbers!";
+        return;
+      }
+      const output = runNeuralNet(inputNumbers);
+      nnOutput.textContent = `Neural net output: ${output.toFixed(4)}`;
+    });
+  </script>
+</body>
+</html>
